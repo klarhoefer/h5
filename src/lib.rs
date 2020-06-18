@@ -5,6 +5,10 @@ use std::path::Path;
 mod hdf5;
 use hdf5::*;
 
+macro_rules! cc {
+    ($txt:literal) => { $txt.as_ptr() as *const _};
+}
+
 pub enum OpenMode {
     Read, Write, ReadWrite
 }
@@ -32,6 +36,20 @@ impl H5File {
         }
         None
     }
+
+    pub fn init(&self) {
+        unsafe {
+            // let config = H5Gcreate2(self.fid, b"/Configuration\0".as_ptr() as *const _, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            let config = H5Gcreate2(self.fid, cc!(b"/Configuration\0"), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            if config != H5I_INVALID_HID {
+                H5Gclose(config);
+            }
+            let chans = H5Gcreate2(self.fid, cc!(b"/Channels\0"), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            if chans != H5I_INVALID_HID {
+                H5Gclose(chans);
+            }
+        }
+    }
 }
 
 impl Drop for H5File {
@@ -51,7 +69,8 @@ mod tests {
     #[test]
     fn it_works() {
         {
-            let _ = H5File::open("test.h5", OpenMode::Write);
+            let f = H5File::open("test.h5", OpenMode::Write).unwrap();
+            f.init();
         }
         {
             let _ = H5File::open("test.h5", OpenMode::Read);

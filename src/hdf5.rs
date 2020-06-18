@@ -29,7 +29,11 @@ pub const H5F_ACC_CREAT: c_uint = 0x0010;
 
 
 extern {
-    pub fn H5Fcreate(name: *const c_char, flags: c_uint, fcpl_id: hid_t, fapl_id: hid_t) -> hid_t;
-    pub fn H5Fopen(name: *const c_char, flags: c_uint, fapl_id: hid_t) -> hid_t;
+    pub fn H5Fcreate(filename: *const c_char, flags: c_uint, create_plist: hid_t, access_plist: hid_t) -> hid_t;
+    pub fn H5Fopen(filename: *const c_char, flags: c_uint, access_plist: hid_t) -> hid_t;
     pub fn H5Fclose(file_id: hid_t) -> herr_t;
+
+    pub fn H5Gcreate2(loc_id: hid_t, name: *const c_char, lcpl_id: hid_t, gcpl_id: hid_t, gapl_id: hid_t) -> hid_t;
+    pub fn H5Gopen2(loc_id: hid_t, name: *const c_char, gapl_id: hid_t) -> hid_t;
+    pub fn H5Gclose(group_id: hid_t) -> herr_t;
 }
