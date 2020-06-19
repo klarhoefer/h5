@@ -22,6 +22,8 @@ pub type size_t = usize;
 
 pub const H5P_DEFAULT: hid_t = 0;
 pub const H5I_INVALID_HID: hid_t = -1;
+pub const H5S_ALL: hid_t = 0;
+
 
 pub const H5F_ACC_RDONLY: c_uint = 0x0000;
 pub const H5F_ACC_RDWR: c_uint = 0x0001;
@@ -38,9 +40,28 @@ pub enum H5S_class_t {
     H5S_NULL = 2,
 }
 
+#[repr(C)]
+pub enum H5T_class_t {
+    H5T_NO_CLASS = -1,
+    H5T_INTEGER = 0,
+    H5T_FLOAT = 1,
+    H5T_TIME = 2,
+    H5T_STRING = 3,
+    H5T_BITFIELD = 4,
+    H5T_OPAQUE = 5,
+    H5T_COMPOUND = 6,
+    H5T_REFERENCE = 7,
+    H5T_ENUM = 8,
+    H5T_VLEN = 9,
+    H5T_ARRAY = 10,
+    H5T_NCLASSES = 11,
+}
+
 
 extern {
     pub static __imp_H5T_C_S1_g: *const hid_t;
+    pub static __imp_H5T_NATIVE_DOUBLE_g: *const hid_t;
+
 
     pub fn H5Fcreate(filename: *const c_char, flags: c_uint, create_plist: hid_t, access_plist: hid_t) -> hid_t;
     pub fn H5Fopen(filename: *const c_char, flags: c_uint, access_plist: hid_t) -> hid_t;
@@ -50,16 +71,27 @@ extern {
     pub fn H5Gopen2(loc_id: hid_t, name: *const c_char, gapl_id: hid_t) -> hid_t;
     pub fn H5Gclose(group_id: hid_t) -> herr_t;
 
+    pub fn H5Dcreate2(loc_id: hid_t, name: *const c_char, type_id: hid_t, space_id: hid_t, lcpl_id: hid_t, dcpl_id: hid_t, dapl_id: hid_t) -> hid_t;
+    pub fn H5Dopen2(file_id: hid_t, name: *const c_char, dapl_id: hid_t) -> hid_t;
+    pub fn H5Dclose(dset_id: hid_t) -> herr_t;
+    pub fn H5Dget_space(dset_id: hid_t) -> hid_t;
+    pub fn H5Dget_type(dset_id: hid_t) -> hid_t;
+    pub fn H5Dread(dset_id: hid_t, mem_type_id: hid_t, mem_space_id: hid_t, file_space_id: hid_t, plist_id: hid_t, buf: *mut c_void) -> herr_t;
+    pub fn H5Dwrite(dset_id: hid_t, mem_type_id: hid_t, mem_space_id: hid_t, file_space_id: hid_t, plist_id: hid_t, buf: *const c_void) -> herr_t;
+
 
     pub fn H5Screate(type_: H5S_class_t) -> hid_t;
     pub fn H5Screate_simple(rank: c_int, dims: *const hsize_t, maxdims: *const hsize_t) -> hid_t;
     pub fn H5Sclose(space_id: hid_t) -> herr_t;
+    pub fn H5Sget_select_npoints(spaceid: hid_t) -> hssize_t;
 
 
+    pub fn H5Tcreate(type_: H5T_class_t, size: size_t) -> hid_t;
     pub fn H5Tcopy(type_id: hid_t) -> hid_t;
     pub fn H5Tclose(type_id: hid_t) -> herr_t;
     pub fn H5Tset_size(type_id: hid_t, size: size_t) -> herr_t;
     pub fn H5Tget_size(type_id: hid_t) -> size_t;
+    pub fn H5Tinsert(parent_id: hid_t, name: *const c_char, offset: size_t, member_id: hid_t) -> herr_t;
 
     pub fn H5Acreate2(loc_id: hid_t, attr_name: *const c_char, type_id: hid_t, space_id: hid_t, acpl_id: hid_t, aapl_id: hid_t) -> hid_t;
     pub fn H5Aopen(obj_id: hid_t, attr_name: *const c_char, aapl_id: hid_t) -> hid_t;
@@ -68,7 +100,10 @@ extern {
     pub fn H5Aread(attr_id: hid_t, type_id: hid_t, buf: *mut c_void) -> herr_t;
     // pub fn H5Aget_space(attr_id: hid_t) -> hid_t;
     pub fn H5Aget_type(attr_id: hid_t) -> hid_t;
+    pub fn H5Aexists(obj_id: hid_t, attr_name: *const c_char) -> htri_t;
 
+
+    pub fn H5Lexists(loc_id: hid_t, name: *const c_char, lapl_id: hid_t) -> htri_t;
 
 }
 

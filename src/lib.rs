@@ -6,6 +6,11 @@ use std::str;
 mod datetime;
 use datetime::DateTime;
 
+mod chan;
+
+mod param;
+use param::Parameters;
+
 mod hdf5;
 use hdf5::*;
 
@@ -24,6 +29,7 @@ pub struct H5File {
 static NAME_CHANS: &[u8] = b"/Channels\0";
 static NAME_CONFIG: &[u8] = b"/Configuration\0";
 static NAME_TIMESTAMP: &[u8] = b"Timestamp\0";
+static NAME_PARAMETERS: &[u8] = b"/Configuration/Parameters\0";
 
 #[derive(Debug)]
 pub enum H5Error {
@@ -89,20 +95,30 @@ impl H5File {
     pub fn get_timestamp(&self) -> Option<DateTime> {
         let mut buffer = [0u8; 24];
         unsafe {
-            let aid = H5Aopen(self.fid, cc!(NAME_TIMESTAMP), H5P_DEFAULT);
-            let tid = H5Aget_type(aid);
-            let size = H5Tget_size(tid);
-            H5Aread(aid, tid, buffer.as_mut_ptr() as *mut _);
-            H5Tclose(tid);
-            H5Aclose(aid);
-
-            if let Ok(s) = str::from_utf8(&buffer[..size]) {
-                if let Ok(dt) = DateTime::parse(s) {
-                    return Some(dt);
+            if H5Aexists(self.fid, cc!(NAME_TIMESTAMP)) > 0 {
+                let aid = H5Aopen(self.fid, cc!(NAME_TIMESTAMP), H5P_DEFAULT);
+                let tid = H5Aget_type(aid);
+                let size = H5Tget_size(tid);
+                H5Aread(aid, tid, buffer.as_mut_ptr() as *mut _);
+                H5Tclose(tid);
+                H5Aclose(aid);
+    
+                if let Ok(s) = str::from_utf8(&buffer[..size]) {
+                    if let Ok(dt) = DateTime::parse(s) {
+                        return Some(dt);
+                    }
                 }
             }
         }
         None
+    }
+
+    pub fn set_params(&self, params: Parameters) {
+        params.save(self.fid, NAME_PARAMETERS.as_ptr());
+    }
+
+    pub fn get_params(&self) -> Option<Parameters> {
+        Parameters::load(self.fid, NAME_PARAMETERS.as_ptr())
     }
 }
 
@@ -120,7 +136,7 @@ impl Drop for H5File {
 #[cfg(test)]
 mod tests {
 
-    use super::{H5File, OpenMode, DateTime};
+    use super::{H5File, OpenMode, DateTime, Parameters};
 
     #[test]
     fn open_close() {
@@ -141,7 +157,27 @@ mod tests {
         }
         {
             let f = H5File::open("test_ts.h5", OpenMode::Read).unwrap();
-            let ts = f.get_timestamp().unwrap();
+            let _ = f.get_timestamp().unwrap();
+        }
+    }
+
+    #[test]
+    fn read_write_params() {
+        {
+            let f = H5File::open("test_params.h5", OpenMode::Write).unwrap();
+            f.init();
+            let mut params = Parameters::new();
+            params.add("PumpsOn", 5000.0);
+            params.add("PumpsOff", 4000.0);
+            f.set_params(params);
+        }
+        {
+            let f = H5File::open("test_params.h5", OpenMode::Read).unwrap();
+            let mut params = f.get_params().unwrap();
+            params.map(|name, val| {
+                println!("Name: >{}<, Value: {}", name, val);
+                val + 1.0
+            });
         }
     }
 }
