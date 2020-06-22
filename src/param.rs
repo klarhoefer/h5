@@ -40,7 +40,7 @@ impl Parameters {
     }
 
     pub fn save(&self, loc: hid_t, name: *const u8) {
-        let dims: [hsize_t; 1] = [self.params.len() as hsize_t];
+        let dims = [self.params.len() as hsize_t];
         unsafe {
             let s16id = H5Tcopy(*__imp_H5T_C_S1_g);
             H5Tset_size(s16id, 16);

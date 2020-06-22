@@ -24,6 +24,8 @@ pub const H5P_DEFAULT: hid_t = 0;
 pub const H5I_INVALID_HID: hid_t = -1;
 pub const H5S_ALL: hid_t = 0;
 
+pub const H5S_UNLIMITED: hsize_t = (-1 as hssize_t) as _;
+
 
 pub const H5F_ACC_RDONLY: c_uint = 0x0000;
 pub const H5F_ACC_RDWR: c_uint = 0x0001;
@@ -61,6 +63,10 @@ pub enum H5T_class_t {
 extern {
     pub static __imp_H5T_C_S1_g: *const hid_t;
     pub static __imp_H5T_NATIVE_DOUBLE_g: *const hid_t;
+    pub static __imp_H5T_NATIVE_FLOAT_g: *const hid_t;
+    pub static __imp_H5T_NATIVE_INT_g: *const hid_t;
+
+    pub static __imp_H5P_CLS_DATASET_CREATE_ID_g: *const hid_t;
 
 
     pub fn H5Fcreate(filename: *const c_char, flags: c_uint, create_plist: hid_t, access_plist: hid_t) -> hid_t;
@@ -101,6 +107,11 @@ extern {
     // pub fn H5Aget_space(attr_id: hid_t) -> hid_t;
     pub fn H5Aget_type(attr_id: hid_t) -> hid_t;
     pub fn H5Aexists(obj_id: hid_t, attr_name: *const c_char) -> htri_t;
+
+    pub fn H5Pcreate(cls_id: hid_t) -> hid_t;
+    pub fn H5Pclose(plist_id: hid_t) -> herr_t;
+    pub fn H5Pset_chunk(plist_id: hid_t, ndims: c_int, dim: *const hsize_t) -> herr_t;
+    pub fn H5Pset_deflate(plist_id: hid_t, aggression: c_uint) -> herr_t;
 
 
     pub fn H5Lexists(loc_id: hid_t, name: *const c_char, lapl_id: hid_t) -> htri_t;

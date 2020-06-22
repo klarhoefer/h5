@@ -7,6 +7,7 @@ mod datetime;
 use datetime::DateTime;
 
 mod chan;
+use chan::H5Chan;
 
 mod param;
 use param::Parameters;
@@ -120,6 +121,14 @@ impl H5File {
     pub fn get_params(&self) -> Option<Parameters> {
         Parameters::load(self.fid, NAME_PARAMETERS.as_ptr())
     }
+
+    pub fn create_channel(&self, number: u8, sample_rate: u16) -> H5Chan {
+        H5Chan::create(self.fid, number, sample_rate)
+    }
+
+    pub fn open_channel(&self, number: u8) -> Option<H5Chan> {
+        H5Chan::open(self.fid, number)
+    }
 }
 
 impl Drop for H5File {
@@ -178,6 +187,20 @@ mod tests {
                 println!("Name: >{}<, Value: {}", name, val);
                 val + 1.0
             });
+        }
+    }
+
+    #[test]
+    fn read_write_chan() {
+        {
+            let f = H5File::open("test_chan.h5", OpenMode::Write).unwrap();
+            f.init();
+            let _ = f.create_channel(0, 256);
+        }
+        {
+            let f = H5File::open("test_chan.h5", OpenMode::Read).unwrap();
+            let c = f.open_channel(0);
+            println!("{:?}", c);
         }
     }
 }
