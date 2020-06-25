@@ -18,15 +18,15 @@ impl H5Chan {
         let chunk_dims = [256 as hsize_t];
         unsafe {
             let sid = H5Screate_simple(1, dims.as_ptr(), max_dims.as_ptr());
-            let pid = H5Pcreate(*__imp_H5P_CLS_DATASET_CREATE_ID_g);
+            let pid = H5Pcreate(H5P_CLS_DATASET_CREATE);
             H5Pset_chunk(pid, 1, chunk_dims.as_ptr());
             H5Pset_deflate(pid, 6);
-            let dsid = H5Dcreate2(loc, path.as_str().as_bytes().as_ptr() as *const _, *__imp_H5T_NATIVE_FLOAT_g, sid,
+            let dsid = H5Dcreate2(loc, path.as_str().as_bytes().as_ptr() as *const _, H5T_NATIVE_FLOAT, sid,
                 H5P_DEFAULT, pid, H5P_DEFAULT);
             let asid = H5Screate(H5S_class_t::H5S_SCALAR);
-            let aid = H5Acreate2(dsid, b"Sample Rate\0".as_ptr() as *const _, *__imp_H5T_NATIVE_INT_g, asid, H5P_DEFAULT, H5P_DEFAULT);
+            let aid = H5Acreate2(dsid, b"Sample Rate\0".as_ptr() as *const _, H5T_NATIVE_INT, asid, H5P_DEFAULT, H5P_DEFAULT);
             let sr = sample_rate as i32;
-            H5Awrite(aid,*__imp_H5T_NATIVE_INT_g, &sr as *const _ as *const _);
+            H5Awrite(aid, H5T_NATIVE_INT, &sr as *const _ as *const _);
             H5Aclose(aid);
             H5Sclose(asid);
             H5Pclose(pid);
@@ -43,13 +43,17 @@ impl H5Chan {
                 let dsid = H5Dopen2(loc, name, H5P_DEFAULT);
                 let aid = H5Aopen(dsid, b"Sample Rate\0".as_ptr() as *const _, H5P_DEFAULT);
                 let mut sr: i32 = 0;
-                H5Aread(aid, *__imp_H5T_NATIVE_INT_g, &mut sr as *mut _ as *mut _);
+                H5Aread(aid, H5T_NATIVE_INT, &mut sr as *mut _ as *mut _);
                 H5Aclose(aid);
-                Some(H5Chan {dsid, sample_rate: 0, chan_no: number })
+                Some(H5Chan {dsid, sample_rate: sr as u16, chan_no: number })
             } else {
                 None
             }
         }
+    }
+
+    pub fn sample_rate(&self) -> u16 {
+        self.sample_rate
     }
 }
 

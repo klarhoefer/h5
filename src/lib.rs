@@ -15,6 +15,8 @@ use param::Parameters;
 mod hdf5;
 use hdf5::*;
 
+pub use hdf5::init;
+
 macro_rules! cc {
     ($txt:ident) => { $txt.as_ptr() as *const _};
 }
@@ -83,7 +85,7 @@ impl H5File {
         let sts = ts.to_string();
         unsafe {
             let sid = H5Screate(H5S_class_t::H5S_SCALAR);
-            let tid = H5Tcopy(*__imp_H5T_C_S1_g);
+            let tid = H5Tcopy(H5T_C_S1);
             H5Tset_size(tid, sts.len());
             let aid = H5Acreate2(self.fid, cc!(NAME_TIMESTAMP), tid, sid, H5P_DEFAULT, H5P_DEFAULT);
             H5Awrite(aid, tid, sts.as_ptr() as *const _);
@@ -139,16 +141,16 @@ impl Drop for H5File {
     }
 }
 
-// cargo test -- --nocapture
-// cargo test -- --test-threads=1
+// cargo test -- --test-threads=1 --nocapture
 
 #[cfg(test)]
 mod tests {
 
-    use super::{H5File, OpenMode, DateTime, Parameters};
+    use super::{init, H5File, OpenMode, DateTime, Parameters};
 
     #[test]
     fn open_close() {
+        init();
         {
             let f = H5File::open("test.h5", OpenMode::Write).unwrap();
             f.init();
@@ -160,6 +162,7 @@ mod tests {
 
     #[test]
     fn read_write_timestamp() {
+        init();
         {
             let f = H5File::open("test_ts.h5", OpenMode::Write).unwrap();
             f.set_timestamp(DateTime::new(2020, 6, 19, 7, 17, 0));
@@ -172,6 +175,7 @@ mod tests {
 
     #[test]
     fn read_write_params() {
+        init();
         {
             let f = H5File::open("test_params.h5", OpenMode::Write).unwrap();
             f.init();
@@ -192,6 +196,7 @@ mod tests {
 
     #[test]
     fn read_write_chan() {
+        init();
         {
             let f = H5File::open("test_chan.h5", OpenMode::Write).unwrap();
             f.init();
@@ -199,8 +204,9 @@ mod tests {
         }
         {
             let f = H5File::open("test_chan.h5", OpenMode::Read).unwrap();
-            let c = f.open_channel(0);
+            let c = f.open_channel(0).unwrap();
             println!("{:?}", c);
+            assert_eq!(256, c.sample_rate());
         }
     }
 }

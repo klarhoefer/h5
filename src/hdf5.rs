@@ -66,6 +66,10 @@ extern {
     pub static __imp_H5T_NATIVE_FLOAT_g: *const hid_t;
     pub static __imp_H5T_NATIVE_INT_g: *const hid_t;
 
+    #[cfg(hid_t_64)]
+    pub static __imp_H5P_CLS_DATASET_CREATE_g: *const hid_t;
+    
+    #[cfg(not(hid_t_64))]
     pub static __imp_H5P_CLS_DATASET_CREATE_ID_g: *const hid_t;
 
 
@@ -118,4 +122,28 @@ extern {
 
 }
 
-// pub static H5T_C_S1: *const hid_t = unsafe { __imp_H5T_C_S1_g };
+pub static mut H5T_C_S1: hid_t = 0;
+pub static mut H5T_NATIVE_DOUBLE: hid_t = 0;
+pub static mut H5T_NATIVE_FLOAT: hid_t = 0;
+pub static mut H5T_NATIVE_INT: hid_t = 0;
+
+pub static mut H5P_CLS_DATASET_CREATE: hid_t = 0;
+
+pub fn init() {
+    unsafe {
+        H5T_C_S1 = *__imp_H5T_C_S1_g;
+        H5T_NATIVE_DOUBLE = *__imp_H5T_NATIVE_DOUBLE_g;
+        H5T_NATIVE_FLOAT = *__imp_H5T_NATIVE_FLOAT_g;
+        H5T_NATIVE_INT = *__imp_H5T_NATIVE_INT_g;
+    }
+    
+    #[cfg(hid_t_64)]
+    unsafe {
+        H5P_CLS_DATASET_CREATE = *__imp_H5P_CLS_DATASET_CREATE_g;
+    }
+
+    #[cfg(not(hid_t_64))]
+    unsafe {
+        H5P_CLS_DATASET_CREATE = *__imp_H5P_CLS_DATASET_CREATE_ID_g;
+    }
+}
