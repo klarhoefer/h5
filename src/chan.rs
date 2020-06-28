@@ -61,11 +61,18 @@ impl H5Chan {
         let mut max_dims = [0 as hsize_t];
         unsafe {
             let sid = H5Dget_space(self.dsid);
-            let tid = H5Dget_type(self.dsid);
             H5Sget_simple_extent_dims(sid, dims.as_mut_ptr(), max_dims.as_mut_ptr());
+            H5Sclose(sid);
+            let start = [dims[0]];
+            let count = [samples.len() as hsize_t];
             dims[0] += samples.len() as hsize_t;
-            H5Sset_extent_simple(sid, 1, dims.as_ptr(), max_dims.as_ptr());
-            // H5Sselect_hyperslap(sid, H5S_seloper_t::H5S_SELECT_SET);
+            H5Dset_extent(self.dsid, dims.as_ptr());
+            let sid = H5Dget_space(self.dsid);
+            H5Sselect_hyperslab(sid, H5S_seloper_t::H5S_SELECT_SET, start.as_ptr(), NULL, count.as_ptr(), NULL);
+            let tid = H5Dget_type(self.dsid);
+            let mem_sid = H5Screate_simple(1, count.as_ptr(), NULL);
+            H5Dwrite(self.dsid, tid, mem_sid, sid, H5P_DEFAULT, samples.as_ptr() as *const _);
+            H5Sclose(mem_sid);
             H5Tclose(tid);
             H5Sclose(sid);
         }

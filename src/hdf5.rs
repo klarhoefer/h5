@@ -102,6 +102,7 @@ extern {
     pub fn H5Dget_type(dset_id: hid_t) -> hid_t;
     pub fn H5Dread(dset_id: hid_t, mem_type_id: hid_t, mem_space_id: hid_t, file_space_id: hid_t, plist_id: hid_t, buf: *mut c_void) -> herr_t;
     pub fn H5Dwrite(dset_id: hid_t, mem_type_id: hid_t, mem_space_id: hid_t, file_space_id: hid_t, plist_id: hid_t, buf: *const c_void) -> herr_t;
+    pub fn H5Dset_extent(dset_id: hid_t, size: *const hsize_t) -> herr_t;
 
 
     pub fn H5Screate(type_: H5S_class_t) -> hid_t;
@@ -109,8 +110,7 @@ extern {
     pub fn H5Sclose(space_id: hid_t) -> herr_t;
     pub fn H5Sget_select_npoints(spaceid: hid_t) -> hssize_t;
     pub fn H5Sget_simple_extent_dims(space_id: hid_t, dims: *mut hsize_t, maxdims: *mut hsize_t) -> c_int;
-    pub fn H5Sset_extent_simple(space_id: hid_t, rank: c_int, dims: *const hsize_t, max: *const hsize_t) -> herr_t;
-    pub fn H5Sselect_hyperslab(space_id: hid_t, op: H5S_seloper_t, start: *const hsize_t, _stride: *const hsize_t, count: *const hsize_t, _block: *const hsize_t) -> herr_t;
+    pub fn H5Sselect_hyperslab(space_id: hid_t, op: H5S_seloper_t, start: *const hsize_t, stride: *const hsize_t, count: *const hsize_t, block: *const hsize_t) -> herr_t;
 
 
     pub fn H5Tcreate(type_: H5T_class_t, size: size_t) -> hid_t;

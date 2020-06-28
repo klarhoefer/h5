@@ -201,8 +201,13 @@ mod tests {
             let f = H5File::open("test_chan.h5", OpenMode::Write).unwrap();
             f.init();
             let c = f.create_channel(0, 256);
-            let samples = [23f32; 256];
-            c.append(&samples);
+            let mut samples = [0f32; 256];
+            for i in 0..60 {
+                for j in 0..256 {
+                    samples[j] = 23.0f32 + (i * 256 + j) as f32 / 100.0f32;
+                }
+                c.append(&samples);
+            }
         }
         {
             let f = H5File::open("test_chan.h5", OpenMode::Read).unwrap();
