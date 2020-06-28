@@ -8,6 +8,7 @@ pub struct H5Chan {
     dsid: hid_t,
     sample_rate: u16,
     chan_no: u8,
+    count: usize,
 }
 
 impl H5Chan {
@@ -31,7 +32,7 @@ impl H5Chan {
             H5Sclose(asid);
             H5Pclose(pid);
             H5Sclose(sid);
-            H5Chan { dsid, sample_rate, chan_no: number }
+            H5Chan { dsid, sample_rate, chan_no: number, count: 0 }
         }
     }
 
@@ -45,18 +46,25 @@ impl H5Chan {
                 let mut sr: i32 = 0;
                 H5Aread(aid, H5T_NATIVE_INT, &mut sr as *mut _ as *mut _);
                 H5Aclose(aid);
-                Some(H5Chan {dsid, sample_rate: sr as u16, chan_no: number })
+                let sid = H5Dget_space(dsid);
+                let count = H5Sget_select_npoints(sid) as usize;
+                H5Sclose(sid);
+                Some(H5Chan {dsid, sample_rate: sr as u16, chan_no: number, count })
             } else {
                 None
             }
         }
     }
 
+    pub fn count(&self) -> usize {
+        self.count
+    }
+
     pub fn sample_rate(&self) -> u16 {
         self.sample_rate
     }
 
-    pub fn append(&self, samples: &[f32]) {
+    pub fn append(&mut self, samples: &[f32]) {
         let mut dims = [0 as hsize_t];
         let mut max_dims = [0 as hsize_t];
         unsafe {
@@ -72,6 +80,22 @@ impl H5Chan {
             let tid = H5Dget_type(self.dsid);
             let mem_sid = H5Screate_simple(1, count.as_ptr(), NULL);
             H5Dwrite(self.dsid, tid, mem_sid, sid, H5P_DEFAULT, samples.as_ptr() as *const _);
+            H5Sclose(mem_sid);
+            H5Tclose(tid);
+            H5Sclose(sid);
+        }
+        self.count += samples.len();
+    }
+
+    pub fn read(&self, offset: usize, samples: &mut[f32]) {
+        unsafe {
+            let start = [offset as hsize_t];
+            let count = [samples.len() as hsize_t];
+            let sid = H5Dget_space(self.dsid);
+            let tid = H5Dget_type(self.dsid);
+            H5Sselect_hyperslab(sid, H5S_seloper_t::H5S_SELECT_SET, start.as_ptr(), NULL, count.as_ptr(), NULL);
+            let mem_sid = H5Screate_simple(1, count.as_ptr(), NULL);
+            H5Dread(self.dsid, tid, mem_sid, sid, H5P_DEFAULT, samples.as_mut_ptr() as *mut _);
             H5Sclose(mem_sid);
             H5Tclose(tid);
             H5Sclose(sid);

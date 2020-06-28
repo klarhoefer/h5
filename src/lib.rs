@@ -200,7 +200,7 @@ mod tests {
         {
             let f = H5File::open("test_chan.h5", OpenMode::Write).unwrap();
             f.init();
-            let c = f.create_channel(0, 256);
+            let mut c = f.create_channel(0, 256);
             let mut samples = [0f32; 256];
             for i in 0..60 {
                 for j in 0..256 {
@@ -214,6 +214,10 @@ mod tests {
             let c = f.open_channel(0).unwrap();
             println!("{:?}", c);
             assert_eq!(256, c.sample_rate());
+            assert_eq!(256*60, c.count());
+            let mut buffer = [0f32; 256];
+            c.read(256*50, &mut buffer[..]);
+            println!("{:?}", &buffer[..4]);
         }
     }
 }
