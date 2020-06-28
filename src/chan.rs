@@ -55,6 +55,21 @@ impl H5Chan {
     pub fn sample_rate(&self) -> u16 {
         self.sample_rate
     }
+
+    pub fn append(&self, samples: &[f32]) {
+        let mut dims = [0 as hsize_t];
+        let mut max_dims = [0 as hsize_t];
+        unsafe {
+            let sid = H5Dget_space(self.dsid);
+            let tid = H5Dget_type(self.dsid);
+            H5Sget_simple_extent_dims(sid, dims.as_mut_ptr(), max_dims.as_mut_ptr());
+            dims[0] += samples.len() as hsize_t;
+            H5Sset_extent_simple(sid, 1, dims.as_ptr(), max_dims.as_ptr());
+            // H5Sselect_hyperslap(sid, H5S_seloper_t::H5S_SELECT_SET);
+            H5Tclose(tid);
+            H5Sclose(sid);
+        }
+    }
 }
 
 impl Drop for H5Chan {

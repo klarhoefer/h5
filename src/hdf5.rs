@@ -35,6 +35,20 @@ pub const H5F_ACC_CREAT: c_uint = 0x0010;
 
 
 #[repr(C)]
+pub enum H5S_seloper_t {
+    H5S_SELECT_NOOP = -1,
+    H5S_SELECT_SET = 0,
+    H5S_SELECT_OR = 1,
+    H5S_SELECT_AND = 2,
+    H5S_SELECT_XOR = 3,
+    H5S_SELECT_NOTB = 4,
+    H5S_SELECT_NOTA = 5,
+    H5S_SELECT_APPEND = 6,
+    H5S_SELECT_PREPEND = 7,
+    H5S_SELECT_INVALID = 8,
+}
+
+#[repr(C)]
 pub enum H5S_class_t {
     H5S_NO_CLASS = -1,
     H5S_SCALAR = 0,
@@ -94,6 +108,9 @@ extern {
     pub fn H5Screate_simple(rank: c_int, dims: *const hsize_t, maxdims: *const hsize_t) -> hid_t;
     pub fn H5Sclose(space_id: hid_t) -> herr_t;
     pub fn H5Sget_select_npoints(spaceid: hid_t) -> hssize_t;
+    pub fn H5Sget_simple_extent_dims(space_id: hid_t, dims: *mut hsize_t, maxdims: *mut hsize_t) -> c_int;
+    pub fn H5Sset_extent_simple(space_id: hid_t, rank: c_int, dims: *const hsize_t, max: *const hsize_t) -> herr_t;
+    pub fn H5Sselect_hyperslab(space_id: hid_t, op: H5S_seloper_t, start: *const hsize_t, _stride: *const hsize_t, count: *const hsize_t, _block: *const hsize_t) -> herr_t;
 
 
     pub fn H5Tcreate(type_: H5T_class_t, size: size_t) -> hid_t;
@@ -129,12 +146,18 @@ pub static mut H5T_NATIVE_INT: hid_t = 0;
 
 pub static mut H5P_CLS_DATASET_CREATE: hid_t = 0;
 
+pub static mut IS_INITIALIZED: bool = false;
+
+pub const NULL: *const hsize_t = 0 as *const hsize_t;
+
 pub fn init() {
     unsafe {
         H5T_C_S1 = *__imp_H5T_C_S1_g;
         H5T_NATIVE_DOUBLE = *__imp_H5T_NATIVE_DOUBLE_g;
         H5T_NATIVE_FLOAT = *__imp_H5T_NATIVE_FLOAT_g;
         H5T_NATIVE_INT = *__imp_H5T_NATIVE_INT_g;
+        
+        IS_INITIALIZED = true;
     }
     
     #[cfg(hid_t_64)]

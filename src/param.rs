@@ -62,7 +62,7 @@ impl Parameters {
             let tid = H5Tcreate(H5T_class_t::H5T_COMPOUND, 24);
             H5Tinsert(tid, b"Name\0".as_ptr() as *const _, 0, s16id);
             H5Tinsert(tid, b"Value\0".as_ptr() as *const _, 16, H5T_NATIVE_DOUBLE);
-            let sid = H5Screate_simple(1, dims.as_ptr(), 0 as *const hsize_t);
+            let sid = H5Screate_simple(1, dims.as_ptr(), NULL);
             let dsid = H5Dcreate2(loc, name as *const _, tid, sid, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
             H5Dwrite(dsid, tid, H5S_ALL, H5S_ALL, H5P_DEFAULT, self.params.as_ptr() as *const _);
             H5Dclose(dsid);
